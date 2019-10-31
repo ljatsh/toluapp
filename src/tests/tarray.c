@@ -37,7 +37,22 @@ int main (void)
 	luaopen_base(L);
 	tolua_tarray_open(L);
 
-	lua_dofile(L,"tarray.lua");
+	int n = luaL_dofile(L,"src/tests/tarray.lua");
+  if (n == 1)
+  {
+    int i=1;
+    for (; i<=lua_gettop(L); i++)
+    {
+      switch(lua_type(L, i))
+      {
+        case LUA_TNIL: printf("nil "); break;
+        case LUA_TNUMBER: printf("%f ", lua_tonumber(L, i)); break;
+        case LUA_TBOOLEAN: printf("%s ", lua_toboolean(L, i) == 0 ? "true" : "false"); break;
+        case LUA_TSTRING: printf("%s ", lua_tostring(L, i)); break;
+      }
+    }
+    printf("\n");
+  }
 
 	lua_close(L);
 	return 0;
