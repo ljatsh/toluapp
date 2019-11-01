@@ -2,9 +2,69 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <lua.h>
 
 #include "helper.h"
+
+void
+init_queue(queue* q, const void* data)
+{
+  q->data = data;
+  q->next = NULL;
+}
+
+int
+is_contain(queue* q, const void* data)
+{
+  queue* h = q;
+  while (h != NULL)
+  {
+    if (h->data == data)
+      return 0;
+
+    h = h->next;
+  }
+
+  return 1;
+}
+
+void
+enqueue(queue* q, const void* data)
+{
+  if (q->data == NULL)
+  {
+    q->data = data;
+    return;
+  }
+
+  queue* h = q;
+  while (h != NULL)
+  {
+    if (h->data == NULL)
+    {
+      queue* q2 = (queue*)malloc(sizeof(queue));
+      init_queue(q2, data);
+      h->next = q2;
+      return;
+    }
+    h = h->next;
+  }
+}
+
+void
+free_queue(queue* q)
+{
+  queue* h = q;
+  queue* t;
+  while (h != NULL)
+  {
+    t = h;
+    h = h->next;
+
+    free(t);
+  }
+}
 
 void
 init_dump(dump_buff* b)
@@ -26,6 +86,9 @@ write_dump(dump_buff* b, const char* s)
 
   size_t l = strlen(s);
   size_t m = sizeof(b->buff) - b->offset - 1;
+  if (sizeof(b->buff) <= (b->offset + 1))
+    m = 0;
+
   if (l > m)
     l = m;
 
@@ -45,6 +108,9 @@ write_dump_fmt(dump_buff* b, const char* fmt, ...)
   va_start(ap, fmt);
 
   size_t m = sizeof(b->buff) - b->offset - 1;
+  if (sizeof(b->buff) <= (b->offset + 1))
+    m = 0;
+
   // https://linux.die.net/man/3/vsnprintf
   size_t l = vsnprintf(b->buff + b->offset, m, fmt, ap);
   b->offset += l;
@@ -54,39 +120,39 @@ write_dump_fmt(dump_buff* b, const char* fmt, ...)
 }
 
 int
-write_dump_tab(dump_buff* b)
+write_dump_tab(dump_buff* b, int cnt2)
 {
-  size_t cnt = b->level << 1;
+  size_t cnt = (b->level == 0 ? : (b->level - 1)) << 1;
+  cnt += cnt2;
+  
   size_t m = sizeof(b->buff) - b->offset - 1;
+  if (sizeof(b->buff) <= (b->offset + 1))
+    m = 0;
+
   if (cnt > m)
     cnt = m;
 
   memset(b->buff + b->offset, ' ', cnt);
+  b->offset += cnt;
 
   return cnt;
 }
 
 int
-write_dump_lua(dump_buff* b, lua_State* L, int pos)
+write_dump_lua(dump_buff* b, lua_State* L, int pos, queue* q)
 {
   int t = lua_type(L, pos);
-  printf("t = %d\n", t);
   switch (t)
   {
-    case LUA_TNIL: return write_dump(b, "nil");
-    case LUA_TNUMBER: return write_dump_fmt(b, "%f", lua_tonumber(L, pos));
+    case LUA_TNIL: return write_dump(b, "'nil'");
+    case LUA_TNUMBER: return write_dump_fmt(b, "%.1f", lua_tonumber(L, pos));
     case LUA_TBOOLEAN: return write_dump(b, lua_toboolean(L, pos) == 0 ? "false" : "true");
-    case LUA_TSTRING: return write_dump(b, lua_tostring(L, pos));
+    case LUA_TSTRING: return write_dump_fmt(b, "'%s'", lua_tostring(L, pos));
     case LUA_TTABLE:
       {
-        if (b->level >= 1)
-        {
-          return write_dump(b, "nested t");
-        }
-
         b->level++;
         lua_pushvalue(L, pos);
-        int l = write_dump_lua_table(b, L);
+        int l = write_dump_lua_table(b, L, q);
         lua_pop(L, 1);
         b->level--;
 
@@ -94,10 +160,15 @@ write_dump_lua(dump_buff* b, lua_State* L, int pos)
       }
     case LUA_TFUNCTION:
     {
-       lua_CFunction f = lua_tocfunction(L, pos);
-       return write_dump_fmt(b, "function %p", f);
+       const void* p = lua_topointer(L, pos);
+       return write_dump_fmt(b, "function %p", p);
     }
     case LUA_TLIGHTUSERDATA:
+    {
+      const void* p = lua_topointer(L, pos);
+      return write_dump_fmt(b, "lightuserdata %p", p);
+    }
+    case LUA_TUSERDATA:
     {
        void* p = lua_touserdata(L, pos);
        return write_dump_fmt(b, "userdata %p", p);
@@ -109,40 +180,83 @@ write_dump_lua(dump_buff* b, lua_State* L, int pos)
 int
 write_dump_lua_key(dump_buff* b, lua_State* L, int pos)
 {
-  /*return write_dump_lua(b, L, pos);*/
   int t = lua_type(L, pos);
   switch (t)
   {
-    case LUA_TNIL: return write_dump(b, "nil");
-    case LUA_TNUMBER: return write_dump_fmt(b, "%f", lua_tonumber(L, pos));
+    case LUA_TNIL: return write_dump(b, "'nil'");
+    case LUA_TNUMBER: return write_dump_fmt(b, "%.1f", lua_tonumber(L, pos));
     case LUA_TBOOLEAN: return write_dump(b, lua_toboolean(L, pos) == 0 ? "false" : "true");
-    case LUA_TSTRING: return write_dump(b, lua_tostring(L, pos));
+    case LUA_TSTRING: return write_dump_fmt(b, "'%s'", lua_tostring(L, pos));
+    case LUA_TFUNCTION:
+    {
+       const void* p = lua_topointer(L, pos);
+       return write_dump_fmt(b, "function %p", p);
+    }
+    case LUA_TLIGHTUSERDATA:
+    {
+      const void* p = lua_topointer(L, pos);
+      return write_dump_fmt(b, "lightuserdata %p", p);
+    }
+    case LUA_TUSERDATA:
+    {
+       void* p = lua_touserdata(L, pos);
+       return write_dump_fmt(b, "userdata %p", p);
+    }
     default: write_dump(b, "."); return 0;
   }
 }
 
 int
-write_dump_lua_table(dump_buff* b, lua_State* L)
+write_dump_lua_table(dump_buff* b, lua_State* L, queue* q)
 {
-  int l = 0;
-  l += write_dump(b, "{");
+  const void* p = lua_topointer(L, -1);
+  if (is_contain(q, p) == 0)
+    return write_dump_fmt(b, "table %p", p);
 
-  printf("size(begin dump lua table) %d\n", lua_gettop(L));
+  enqueue(q, p);
+
+  int l = 0;
+  l += write_dump(b, "\n");
+  l += write_dump_tab(b, 0);
+  l += write_dump(b, "{\n");
 
   lua_pushnil(L);
   while (lua_next(L, -2) != 0)
   {
+    l += write_dump_tab(b, 2);
     l += write_dump_lua_key(b, L, -2);
     l += write_dump(b, ": ");
-    l += write_dump_lua(b, L, -1);
-    l += write_dump(b, ", ");
-
-    printf("key type %d, value type %d\n", lua_type(L, -2), lua_type(L, -1));
+    l += write_dump_lua(b, L, -1, q);
+    l += write_dump(b, "\n");
 
     lua_pop(L, 1);
-    printf("size(end looping lua table) -> %d\n", lua_gettop(L));
   }
 
+  l += write_dump_tab(b, 0);
   l += write_dump(b, "}");
   return l;
+}
+
+int
+dump_lua(lua_State* L)
+{
+  int n = lua_gettop(L);
+  if (n == 0)
+    return 0;
+
+  dump_buff b;
+  init_dump(&b);
+  queue* p = (queue*)malloc(sizeof(queue));
+  init_queue(p, NULL);
+
+  int i = 1;
+  for (; i<=n; i++)
+  {
+    write_dump_lua(&b, L, i, p);
+    write_dump(&b, " ");
+  }
+  free_queue(p);
+
+  print_dump(&b);
+  return 0;
 }

@@ -37,8 +37,10 @@ int main (void)
 	luaopen_base(L);
 	tolua_tarray_open(L);
 
+  lua_pushcfunction(L, dump_lua);
+  lua_setglobal(L, "dump_lua");
+
 	int n = luaL_dofile(L,"src/tests/tarray.lua");
-  printf("lua stack size:%d\n", lua_gettop(L));
   if (n == 1)
   {
     for (i=1; i<=lua_gettop(L); i++)
@@ -53,14 +55,6 @@ int main (void)
     }
     printf("\n");
   }
-
-  dump_buff b;
-  init_dump(&b);
-  for (i=1; i<=lua_gettop(L); i++)
-  {
-    write_dump_lua(&b, L, i);
-  }
-  print_dump(&b);
 
 	lua_close(L);
 	return 0;
