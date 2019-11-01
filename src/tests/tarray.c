@@ -2,7 +2,7 @@
 #include "lauxlib.h"
 
 #include "tarray.h"
-
+#include "helper.h"
 
 int a[10] = {1,2,3,4,5,6,7,8,9,10};
 Point p[10] = {{0,1},{1,2},{2,3},{3,4},{4,5},{5,6},{6,7},{7,8},{8,9},{9,10}};
@@ -38,10 +38,10 @@ int main (void)
 	tolua_tarray_open(L);
 
 	int n = luaL_dofile(L,"src/tests/tarray.lua");
+  printf("lua stack size:%d\n", lua_gettop(L));
   if (n == 1)
   {
-    int i=1;
-    for (; i<=lua_gettop(L); i++)
+    for (i=1; i<=lua_gettop(L); i++)
     {
       switch(lua_type(L, i))
       {
@@ -53,6 +53,14 @@ int main (void)
     }
     printf("\n");
   }
+
+  dump_buff b;
+  init_dump(&b);
+  for (i=1; i<=lua_gettop(L); i++)
+  {
+    write_dump_lua(&b, L, i);
+  }
+  print_dump(&b);
 
 	lua_close(L);
 	return 0;

@@ -12,7 +12,7 @@ test_array_so = env_tests.SharedLibrary('tarray', ['tarraybind.c'], LIBS=['$tolu
 env_tests.Append(LIBPATH=".")
 
 test_class = env_tests.Program('tclass', ['tclass.cpp'], LIBS=env['LIBS']+['tclass']+['$tolua_lib'])
-test_array = env_tests.Program('tarray', ['tarray.c'], LIBS=env['LIBS']+['tarray']+['$tolua_lib'])
+test_array = env_tests.Program('tarray', ['tarray.c', 'helper.c'], LIBS=env['LIBS']+['tarray']+['$tolua_lib'])
 
 
 env.test_targets = [test_class, test_array]
