@@ -32,19 +32,14 @@ is_contain(queue* q, const void* data)
 void
 enqueue(queue* q, const void* data)
 {
-  if (q->data == NULL)
-  {
-    q->data = data;
-    return;
-  }
-
   queue* h = q;
   while (h != NULL)
   {
     if (h->data == NULL)
     {
       queue* q2 = (queue*)malloc(sizeof(queue));
-      init_queue(q2, data);
+      init_queue(q2, NULL);
+      h->data = data;
       h->next = q2;
       return;
     }
@@ -122,7 +117,7 @@ write_dump_fmt(dump_buff* b, const char* fmt, ...)
 int
 write_dump_tab(dump_buff* b, int cnt2)
 {
-  size_t cnt = (b->level == 0 ? : (b->level - 1)) << 1;
+  size_t cnt = (b->level == 0 ? 0 : (b->level - 1)) << 1;
   cnt += cnt2;
   
   size_t m = sizeof(b->buff) - b->offset - 1;
@@ -202,7 +197,12 @@ write_dump_lua_key(dump_buff* b, lua_State* L, int pos)
        void* p = lua_touserdata(L, pos);
        return write_dump_fmt(b, "userdata %p", p);
     }
-    default: write_dump(b, "."); return 0;
+    case LUA_TTABLE:
+    {
+      const void* p = lua_topointer(L, pos);
+      return write_dump_fmt(b, "table %p", p);
+    }
+    default: write_dump_fmt(b, "type(%d)", t); return 0;
   }
 }
 

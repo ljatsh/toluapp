@@ -56,6 +56,18 @@ int main (void)
     printf("\n");
   }
 
+  lua_settop(L, 0);
+
+  /*LUA_REGISTRYINDEX*/
+  printf("============== LUA_REGISTRYINDEX ===================\n");
+  lua_pushvalue(L, LUA_REGISTRYINDEX);
+  dump_lua(L);
+  lua_pop(L, 1);
+
+  // printf("============== ubox mt");
+  // lua_pushstring("ubox");
+  // lua_getmetatable(L, )
+
 	lua_close(L);
 	return 0;
 }

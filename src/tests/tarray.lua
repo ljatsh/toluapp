@@ -35,13 +35,13 @@ for i=2,10 do
 end
 
 print("Array test OK")
-dump_lua(1, true, false, 2.0, 'hello', {10, 11, name='lj@sh', t=function() end, p = print})
+-- dump_lua(1, true, false, 2.0, 'hello', {10, 11, name='lj@sh', t=function() end, p = print})
 
-dump_lua({n=1, info={a='lj', b={age=10, c={p=1}}}})
+-- dump_lua({n=1, info={a='lj', b={age=10, c={p=1}}}})
 
-local t2
-local t = {name = 'lj@sh'}
-t2 = {1, 2, t}
-t.r = t2
-dump_lua(t2)
-dump_lua(_G)
+-- local t2
+-- local t = {name = 'lj@sh'}
+-- t2 = {1, 2, t}
+-- t.r = t2
+-- dump_lua(t2)
+-- dump_lua(_G)
