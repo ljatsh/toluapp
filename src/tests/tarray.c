@@ -64,9 +64,10 @@ int main (void)
   dump_lua(L);
   lua_pop(L, 1);
 
-  // printf("============== ubox mt");
-  // lua_pushstring("ubox");
-  // lua_getmetatable(L, )
+  printf("============== LUA_GLOBALINDEX =====================\n");
+  lua_pushvalue(L, LUA_GLOBALSINDEX);
+  dump_lua(L);
+  lua_pop(L, 1);
 
 	lua_close(L);
 	return 0;

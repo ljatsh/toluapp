@@ -218,7 +218,7 @@ write_dump_lua_table(dump_buff* b, lua_State* L, queue* q)
   int l = 0;
   l += write_dump(b, "\n");
   l += write_dump_tab(b, 0);
-  l += write_dump(b, "{\n");
+  l += write_dump_fmt(b, "{ %p\n", p);
 
   lua_pushnil(L);
   while (lua_next(L, -2) != 0)
@@ -226,6 +226,17 @@ write_dump_lua_table(dump_buff* b, lua_State* L, queue* q)
     l += write_dump_tab(b, 2);
     l += write_dump_lua_key(b, L, -2);
     l += write_dump(b, ": ");
+    l += write_dump_lua(b, L, -1, q);
+    l += write_dump(b, "\n");
+
+    lua_pop(L, 1);
+  }
+
+  /*metatable*/
+  if (lua_getmetatable(L, -1) != 0)
+  {
+    l += write_dump_tab(b, 2);
+    l += write_dump(b, "mt: ");
     l += write_dump_lua(b, L, -1, q);
     l += write_dump(b, "\n");
 
