@@ -41,6 +41,12 @@ int write_dump_lua_key(dump_buff* b, lua_State* L, int pos);
 
 int write_dump_lua_table(dump_buff* b, lua_State* L, queue* q);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int dump_lua(lua_State* L);
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* helper_h */

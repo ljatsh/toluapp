@@ -248,7 +248,11 @@ write_dump_lua_table(dump_buff* b, lua_State* L, queue* q)
   return l;
 }
 
+#ifdef __cplusplus
+extern "C" int
+#else
 int
+#endif
 dump_lua(lua_State* L)
 {
   int n = lua_gettop(L);

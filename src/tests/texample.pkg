@@ -1,4 +1,23 @@
 
 $#include "texample.h"
 
-int sum(a, b);
+void test();
+float sum(float a, float b);
+
+extern float d;
+
+class student
+{
+  bool boy;
+
+  student(const char* name = NULL, int age = 0);
+  virtual ~student();
+
+  void set_name(const char* name);
+  const char* get_name() const;
+
+  void set_age(int age);
+  int get_age() const;
+
+  static float sub(float a, float b);
+};
