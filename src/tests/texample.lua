@@ -1,13 +1,11 @@
 
-print('================== dump _G ====================')
-dump_lua(_G)
+local a = student:create(1)
+print(a:get_name(), a:get_id())
 
-test()
-print(sum(5, 8.2))
+local b = student:create(2)
+print(b:get_name(), b:get_id())
 
-print('d=', d)
-d = 1.2
-print('d=', d)
-
-print('class test')
---print(student:sub(10, 6.3))
+-- error
+-- print(b:unqiue())
+local c = tolua.cast(b, 'stuff')
+print(c:unique())

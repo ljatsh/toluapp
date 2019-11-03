@@ -27,7 +27,7 @@ student::student(const char* name /* = NULL */, int age /* = 0 */)
   set_age(age);
   boy = false;
 
-  printf("sutdent %p was allocated", this);
+  printf("sutdent %p was allocated\n", this);
 }
 
 student::~student()
@@ -55,9 +55,42 @@ int student::get_age() const
   return age;
 }
 
+int student::get_id() const
+{
+  return 1;
+}
+
 float student::sub(float a, float b)
 {
   return a - b;
+}
+
+student* student::create(int a)
+{
+  if (a == 1)
+    return new student("lj@sh", 31);
+
+  return new stuff("lj@bj", 30);
+}
+
+stuff::stuff(const char* name, int age) : student(name, age)
+{
+  printf("stuff %p was allocated\n", this);
+}
+
+stuff::~stuff()
+{
+  printf("stuff %p was released\n", this);
+}
+
+int stuff::get_id() const
+{
+  return 2;
+}
+
+const char* stuff::unique() const
+{
+  return "unique";
 }
 
 extern "C" int tolua_texample_open(lua_State* L);

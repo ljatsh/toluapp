@@ -25,10 +25,24 @@ class student
     void set_name(const char* name);
     const char* get_name() const;
 
+    virtual int get_id() const;
+
     void set_age(int age);
     int get_age() const;
 
     static float sub(float a, float b);
+    static student* create(int a);
+};
+
+class stuff : public student
+{
+  public:
+    stuff(const char* name, int age);
+    virtual ~stuff();
+
+    virtual int get_id() const;
+
+    const char* unique() const;
 };
 
 #endif /* example_h */
